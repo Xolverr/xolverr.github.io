@@ -1,39 +1,15 @@
+<!DOCTYPE html>
+
 <html>
     <head>
-        <style>
-            .button {
-                border-width: 3px;
-                border-radius: 8px;
-                border-color: rgb(129, 129, 129);
-                color: rgb(189, 189, 189);
-                padding: 16px 32px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                margin: 4px 2px;
-                cursor: pointer;
-                background-color: rgb(59, 59, 59);
-                transition-duration: 0.2s;
-            }
-            .button:hover {
-                background-color: rgb(129, 129, 129);
-                color:rgb(59, 59, 59);
-            }
-        </style>
+        <link rel="stylesheet" href="/style.css">
     </head>
-
     <body>
-        <button class="button" onclick="window.open('/slope', '_self')" >Slope</button>
-        <button class="button" onclick="window.open('/stickmanhook', '_self')" >Stickman Hook</button>
+        <canvas id="screen"></canvas>
+        <script src="/keyboard.js"></script>
+        <script src="/classes.js"></script>
+        <script src="/obj.js"></script>
+        <script src="/app.js"></script>
+        <script src="/project.js"></script>
     </body>
-
-    <script>
-        if('serviceWorker' in navigator) {
-          navigator.serviceWorker
-                   .register('/sw.js')
-                   .then(function() { console.log("Service Worker Registered"); });
-        }
-        </script>
-
 </html>
