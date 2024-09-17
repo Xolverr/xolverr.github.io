@@ -8,7 +8,7 @@ class vec3d {
 
     static fromStringArray(arr) {
         return new vec3d(
-            Number(arr[0]), Number(arr[1]), Number(arr[2])
+            Number(arr[2]), Number(arr[1]), Number(arr[0])
         );
     }
 
@@ -68,6 +68,7 @@ class vec3d {
         return new vec3d(
             this.x / k,
             this.y / k,
+            this.z / k,
             this.z / k
         );
     }
@@ -94,11 +95,15 @@ class vec2d {
         this.v = v;
         this.w = w;
     }
+
+    clone() {
+        return new vec2d(this.u, this.v, this.w);
+    }
 }
 
 class triangle {
 
-    constructor(p0=new vec3d(), p1=new vec3d(), p2=new vec3d(), col=[0, 0, 0], t0=new vec2d(), t1=new vec2d(), t2=new vec2d(), texture='') {
+    constructor(p0=new vec3d(), p1=new vec3d(), p2=new vec3d(), col=[0, 0, 0], t0=new vec2d(), t1=new vec2d(), t2=new vec2d(), texture='', normal=new vec3d()) {
         this.p0 = p0;
         this.p1 = p1;
         this.p2 = p2;
@@ -107,6 +112,7 @@ class triangle {
         this.t1 = t1;
         this.t2 = t2;
         this.texture = texture;
+
     }
 
     static fromArray(array) {
@@ -189,6 +195,8 @@ class triangle {
                 tmp[1] * (outside_tex[1].w - inside_tex[0].w) + inside_tex[0].w
             )
 
+            out[0].texture = this.texture;
+
             return out;
         }
         if (insidePointCount == 2 && outsidePointCount == 1) {
@@ -233,6 +241,9 @@ class triangle {
                 tmp[1] * (outside_tex[0].v - inside_tex[1].v) + inside_tex[1].v,
                 tmp[1] * (outside_tex[0].w - inside_tex[1].w) + inside_tex[1].w
             )
+
+            out[0].texture = this.texture;
+            out[1].texture = this.texture;
             
             return out;
         }

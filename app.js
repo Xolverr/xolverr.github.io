@@ -12,8 +12,9 @@ let vCamera = new vec3d();
 let vCamDir = new vec3d();
 let vLookDir = new vec3d();
 
-let mesh = [...getModel('/Bob-omb Battlefield.obj', true, true)];
+let buffer = new Uint8ClampedArray();
 
+let mesh = [...getModel('Bob-omb Battlefield.obj', true, true)];
 function init() {
 
     near = 0.1;
@@ -22,6 +23,10 @@ function init() {
     aspectRatio = ctx.canvas.height / ctx.canvas.width;
 
     matProj = mat4x4.projectionMatrix(fov, aspectRatio, near, far);
+
+    ctx.imageSmoothingEnabled = false;
+
+    ctx.globalCompositeOperation = "source-over";
 
 }
 
@@ -70,25 +75,21 @@ function frame(delta) {
         vCamDir.y -= 2 * 1/60;
     }
 
-
-
-
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
     // matRotZ = mat4x4.rotZMatrix(delta);
     // matRotX = mat4x4.rotXMatrix(delta*0.8);
-    matRotZ = mat4x4.rotZMatrix(0);
-    matRotX = mat4x4.rotZMatrix(0);
+    matRotZ = mat4x4.rotZMatrix(Math.PI);
+    matRotX = mat4x4.rotXMatrix(0);
+    matRotY = mat4x4.rotYMatrix(0);
 
     var matTrans = mat4x4.translationMatrix(0, 0, 8);
     
-    var matWorld = matRotZ.multiplyMatrix(matRotX);
+    var matWorld = matRotY.multiplyMatrix(matRotX);
+    matWorld = matWorld.multiplyMatrix(matRotZ);
     matWorld = matWorld.multiplyMatrix(matTrans);
 
     var vUp = new vec3d(0, 1, 0);
     var vTarget = new vec3d(0, 0, 1);
-    var matCameraRot = mat4x4.rotYMatrix(vCamDir.z);
+    var matCameraRot = mat4x4.rotYMatrix(vCamDir.z).multiplyMatrix(mat4x4.rotXMatrix(vCamDir.y).multiplyMatrix(mat4x4.rotZMatrix(vCamDir.x)));
     vLookDir = matCameraRot.multiplyVector(vTarget);
 
     vTarget = vCamera.add(vLookDir);
@@ -101,10 +102,10 @@ function frame(delta) {
 
     //DRAW
     
-    mesh.forEach(i => {
+    mesh.forEach(isw => {
 
-        // var tri = triangle.scale(i, 2);
-        var tri = i;
+        // var tri = triangle.scale(isw, 2);
+        var tri = isw;
 
         var triTrans = new triangle(
             matWorld.multiplyVector(tri.p0),
@@ -135,7 +136,7 @@ function frame(delta) {
 
         if (normal.dot(vCamRay) < 0) {
 
-            var vLight = new vec3d(0, 1, -1);
+            var vLight = new vec3d(0, -1, 0);
 
             var dp = Math.max(0.1, vLight.normal.dot(normal));
 
@@ -159,23 +160,15 @@ function frame(delta) {
                     matProj.multiplyVector(i.p1),
                     matProj.multiplyVector(i.p2),
                     i.col,
-                    i.t0,
-                    i.t1,
-                    i.t2,
+                    i.t0.clone(),
+                    i.t1.clone(),
+                    i.t2.clone(),
                     tri.texture
                 );
 
-                // triProj.t0.u = triProj.t0.u / triProj.p0.w;
-                // triProj.t1.u = triProj.t1.u / triProj.p1.w;
-                // triProj.t2.u = triProj.t2.u / triProj.p2.w;
-
-                // triProj.t0.v = triProj.t0.v / triProj.p0.w;
-                // triProj.t1.v = triProj.t1.v / triProj.p1.w;
-                // triProj.t2.v = triProj.t2.v / triProj.p2.w;
-
-                triProj.t0.w = 1 / triProj.p0.w;
-                triProj.t1.w = 1 / triProj.p1.w;
-                triProj.t2.w = 1 / triProj.p2.w;
+                triProj.t0 = new vec2d(triProj.t0.u / triProj.p0.w,triProj.t0.v / triProj.p0.w,1/triProj.p0.w);
+                triProj.t1 = new vec2d(triProj.t1.u / triProj.p1.w,triProj.t1.v / triProj.p1.w,1/triProj.p1.w);
+                triProj.t2 = new vec2d(triProj.t2.u / triProj.p2.w,triProj.t2.v / triProj.p2.w,1/triProj.p2.w);
 
                 triProj.p0 = triProj.p0.div(triProj.p0.w);
                 triProj.p1 = triProj.p1.div(triProj.p1.w);
@@ -247,8 +240,8 @@ function frame(delta) {
         listTris.forEach(i => {
 
             // drawTexTri(i);
-
             drawTri(i, ("rgba(" + i.col[0] + "," + i.col[1] + "," + i.col[2] + ", 1)"));
+
             // drawTriOutline(i, "#FFFFFF");
         });
 
@@ -262,9 +255,9 @@ function drawTri(tri, color) {
     ctx.fillStyle = color;
     ctx.strokeStyle = "rgba(0, 0, 0, 0)";
     ctx.beginPath();
-    ctx.moveTo(tri.p0.x, tri.p0.y);
-    ctx.lineTo(tri.p1.x, tri.p1.y);
-    ctx.lineTo(tri.p2.x, tri.p2.y);
+    ctx.moveTo(Math.trunc(tri.p0.x), Math.trunc(tri.p0.y));
+    ctx.lineTo(Math.trunc(tri.p1.x), Math.trunc(tri.p1.y));
+    ctx.lineTo(Math.trunc(tri.p2.x), Math.trunc(tri.p2.y));
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -283,11 +276,6 @@ function drawTriOutline(tri, color) {
 
 function drawTexTri(tri = new triangle()) {
 
-    // if (tri.texture != '') {
-    //     console.log(tri)
-    //     console.ls();
-    // }
-
     var texture = new Image();
     texture.src = tri.texture;
 
@@ -295,8 +283,8 @@ function drawTexTri(tri = new triangle()) {
     var y0 = tri.p0.y, y1 = tri.p1.y, y2 = tri.p2.y;
     
     var w0 = tri.t0.w, w1 = tri.t1.w, w2 = tri.t2.w;
-    var u0 = tri.t0.u/* * texture.width*/, u1 = tri.t1.u/* * texture.width*/, u2 = tri.t2.u/* * texture.width*/;
-    var v0 = tri.t0.v/* * texture.height*/, v1 = tri.t1.v/* * texture.height*/, v2 = tri.t2.v/* * texture.height*/;
+    var u0 = tri.t0.u*texture.width/w0, u1 = tri.t1.u*texture.width/w1, u2 = tri.t2.u*texture.width/w2;
+    var v0 = tri.t0.v*texture.height/w0, v1 = tri.t1.v*texture.height/w1, v2 = tri.t2.v*texture.height/w2;
 
     // Set clipping area so that only pixels inside the triangle will be affected by the image drawing operation
     ctx.save();
@@ -323,3 +311,135 @@ function drawTexTri(tri = new triangle()) {
     ctx.drawImage(texture, 0, 0);
     ctx.restore();
 }
+
+// function drawTexTri(tri = new triangle()) {
+
+//     var texture = new Image();
+//     texture.src = tri.texture;
+
+//     var verts = [
+//         tri.p0,
+//         tri.p1,
+//         tri.p2
+//     ];
+
+//     verts.sort((a,b) => {
+//         return a.y - b.y;
+//     });
+
+//     var x1 = verts[0].x; var y1 = verts[0].y; var u1 = verts[0].u; var v1 = verts[0].v;
+//     var x2 = verts[1].x; var y2 = verts[1].y; var u2 = verts[1].u; var v2 = verts[1].v;
+//     var x3 = verts[2].x; var y3 = verts[2].y; var u3 = verts[2].u; var v3 = verts[2].v;
+
+//     var dy1 = verts[1].y - verts[0].y;
+//     var dx1 = verts[1].x - verts[0].x;
+//     var dv1 = verts[1].v - verts[0].v;
+//     var du1 = verts[1].u - verts[0].u;
+
+//     console.log(verts[0])
+
+//     var dy2 = verts[2].y - verts[0].y;
+//     var dx2 = verts[2].x - verts[0].x;
+//     var dv2 = verts[2].v - verts[0].v;
+//     var du2 = verts[2].u - verts[0].u;
+
+//     var tex_u; var tex_v;
+
+//     var dax_step = 0; var dbx_step = 0;
+//     var du1_step = 0; var dv1_step = 0;
+//     var du2_step = 0; var dv2_step = 0;
+
+//     if (dy1 != 0) dax_step = dx1 / Math.abs(dy1);
+//     if (dy2 != 0) dbx_step = dx2 / Math.abs(dy2);
+
+//     if (dy1 != 0) du1_step = du1 / Math.abs(dy1);
+//     if (dy1 != 0) dv1_step = dv1 / Math.abs(dy1);
+
+//     if (dy2 != 0) du2_step = du2 / Math.abs(dy2);
+//     if (dy2 != 0) dv2_step = dv2 / Math.abs(dy2);
+
+//     if (dy1 != 0) {
+//         for (let i = y1; i < y2; i++) {
+//             var ax = x1 + i - y1 * dax_step;
+//             var bx = x1 + i - y1 * dbx_step;
+            
+//             var tex_su = u1 + i - y1 * du1_step;
+//             var tex_sv = v1 + i - y1 * dv1_step;
+
+//             var tex_eu = u1 + i - y1 * du2_step;
+//             var tex_ev = v1 + i - y1 * dv2_step;
+
+//             if (ax > bx) {
+//                 var tmp = ax;
+//                 ax = bx;
+//                 bx = tmp;
+//                 tmp = tex_su;
+//                 tex_su = tex_eu;
+//                 tex_eu = tmp;
+//                 tmp = tex_sv;
+//                 tex_sv = tex_ev;
+//                 tex_ev = tmp;
+//             }
+
+//             tex_u = tex_su;
+//             tex_v = tex_sv;
+
+//             var tstep = 1 / (bx - ax);
+//             var t = 0;
+
+//             for (let j = ax; j < bx; j++) {
+                
+//                 tex_u = (1-t) * tex_su + t * tex_eu;
+//                 tex_v = (1-t) * tex_sv + t * tex_ev;
+
+//                 addToBuffer(j, i, sampleColor(tex_u, tex_v, texture));
+
+//                 t += tstep;
+                
+//             }
+
+
+//         }
+//     }
+
+
+//     // drawBuffer();
+
+// }
+
+// function sampleColor(u, v, tex) {
+
+//     // imgctx.canvas.width = tex.width;
+//     // imgctx.canvas.height = tex.height;
+
+//     // imgctx.drawImage(tex,0,0);
+    
+//     // return imgctx.getImageData(0,0,u,v).data;
+//     return [180,180,180,1];
+
+// }
+
+// function addToBuffer(x,y,rgba) {
+
+//     buffer[((window.innerWidth * y) + x) * 4] = rgba[0];
+//     buffer[((window.innerWidth * y) + x) * 4 + 1] = rgba[1];
+//     buffer[((window.innerWidth * y) + x) * 4 + 2] = rgba[2];
+//     buffer[((window.innerWidth * y) + x) * 4 + 3] = rgba[3];
+
+// }
+
+// function getIndexOf(x, y, width) {
+//     return y * (imageBuffer.width * 4) + x * 4;
+// }
+
+// function drawBuffer() {
+
+//     createImageBitmap(new ImageData(buffer, window.innerWidth, window.innerHeight)).then(final);
+
+// }
+
+// function final(input) {
+//     if (input) {
+//         ctx.drawImage(input);
+//     }
+// }

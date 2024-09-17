@@ -11,11 +11,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(0, 0, 0),new vec3d(0, 1, 0),new vec3d(1, 1, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(0, 0, 0),new vec3d(1, 1, 0),new vec3d(1, 0, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
 
             //EAST
@@ -23,11 +25,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(1, 0, 0),new vec3d(1, 1, 0),new vec3d(1, 1, 1),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(1, 0, 0),new vec3d(1, 1, 1),new vec3d(1, 0, 1),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
 
             //NORTH
@@ -35,11 +39,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(1, 0, 1),new vec3d(1, 1, 1),new vec3d(0, 1, 1),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(1, 0, 1),new vec3d(0, 1, 1),new vec3d(0, 0, 1),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
 
             //WEST
@@ -47,11 +53,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(0, 0, 1),new vec3d(0, 1, 1),new vec3d(0, 1, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(0, 0, 1),new vec3d(0, 1, 0),new vec3d(0, 0, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
 
             //TOP
@@ -59,11 +67,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(0, 1, 0),new vec3d(0, 1, 1),new vec3d(1, 1, 1),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(0, 1, 0),new vec3d(1, 1, 1),new vec3d(1, 1, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
 
             //BOTTOM
@@ -71,11 +81,13 @@ function getModel(filename, hasTexture=false, hasMTL=false) {
                 new vec3d(1, 0, 1),new vec3d(0, 0, 1),new vec3d(0, 0, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(0, 0),new vec2d(1, 0)
+                ,"/1B46C8C_c.png"
             ),
             new triangle(
                 new vec3d(1, 0, 1),new vec3d(0, 0, 0),new vec3d(1, 0, 0),
                 [255,255,255],
                 new vec2d(0, 1),new vec2d(1, 0),new vec2d(1, 1)
+                ,"/1B46C8C_c.png"
             ),
         ];
 
@@ -106,6 +118,7 @@ function process(hasTexture, hasMTL) {
 
         var objs = [];
         var txts = [];
+        var norms = [];
 
         lines.forEach(i => {
 
@@ -133,14 +146,33 @@ function process(hasTexture, hasMTL) {
 
             } else {
 
+                var temp = [];
+                var rem = 0;
+
+                for (let co = 0; co < items.length; co++) {
+                    if (items[co] != '') {
+                        temp[co-rem] = items[co];
+                    } else {
+                        rem++;
+                    }
+                }
+
+                items = [...temp];
+
                 if (first == 'v') {
 
                     verts.push(vec3d.fromStringArray(items));
+
                 }
 
                 if (first == 'vt') {
-                    texs.push(new vec2d(items[0],items[1]));
+
+                    texs.push(new vec2d(Math.abs(items[0]),Math.abs(items[1])));
                 }
+
+                if (first == 'vn') {
+                    norms.push(vec3d.fromStringArray(items));
+                }  
 
                 if (first == 'f') {
 
@@ -150,10 +182,11 @@ function process(hasTexture, hasMTL) {
                             verts[Number(items[1].split(" ")[0].split("/")[0])  - 1],
                             verts[Number(items[2].split(" ")[0].split("/")[0])  - 1],
                             [255,255,255],
-                            texs[Number(items[items[0].split(" ")[0].split("/")[1]]) - 1],
-                            texs[Number(items[items[1].split(" ")[0].split("/")[1]]) - 1],
-                            texs[Number(items[items[2].split(" ")[0].split("/")[1]]) - 1],
-                            txts[objs.indexOf(objName)]
+                            texs[Number(items[0].split(" ")[0].split("/")[1]) - 1],
+                            texs[Number(items[1].split(" ")[0].split("/")[1]) - 1],
+                            texs[Number(items[2].split(" ")[0].split("/")[1]) - 1],
+                            txts[objs.indexOf(objName)],
+                            norms[Number(items[0].split(" ")[0].split("/")[2]) - 1]
                         )
                     )
                 }
